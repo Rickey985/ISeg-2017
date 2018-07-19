@@ -21,10 +21,12 @@ from scipy.stats import skew
 from sklearn.decomposition import PCA
 from sklearn.linear_model import *
 import lightgbm as lgb
+from sklearn.kernel_ridge import KernelRidge
+from xgboost import XGBRegressor
 from mlxtend.regressor import StackingRegressor
 
-all_data=pd.read_csv('train_1.csv')
-submit_data=pd.read_csv('test_1.csv')
+all_data=pd.read_csv('train.csv')
+submit_data=pd.read_csv('test.csv')
 all_data=all_data.drop(['Id'],axis=1)
 submit_data=submit_data.drop(['Id'],axis=1)
 
@@ -35,8 +37,6 @@ all_data=all_data.drop(['SalePrice'],axis=1)
 all_data=all_data.append(submit_data)
 #Temp Combined Data:#
 temp=all_data
-#Very Important and Useful#
-
 
 #Data Manipulation Here#
 temp['temp_LotAreaCut']=pd.qcut(temp.LotArea,10,duplicates='drop')
@@ -83,6 +83,13 @@ for i in Str:
 #Summary before feature funtime
 print('before NAs are replaced with 0, here is a quick summary of the important vars:')
 
+print('Droppining Missing Values:')
+for i in temp.columns.values:
+    missing_values=temp[i].isnull().sum()
+    if missing_values > 100:
+        print(i+':'+str(missing_values))
+        temp=temp.drop(i,axis=1)
+
 
 
 temp=temp.fillna(0)
@@ -112,25 +119,26 @@ scaler.fit(train_x)
 
 #LGB.fit(train_x,y_train)
 rid=KNeighborsRegressor(n_jobs=3, n_neighbors=4)
+xgb=XGBRegressor(n_estimators=360,max_depth=3,learning_rate=0.1,silent=True,random_state=5,tree_method='exact',n_jobs=3)
 rf=LinearRegression()
-str=StackingRegressor(regressors=[LGB,rid],verbose=1,meta_regressor=rf)
+str=StackingRegressor(regressors=[LGB,rid,xgb],verbose=1,meta_regressor=rf)
 print('Overall RMPSE')
 cv=cross_validate(str,train_x,y_train,scoring=('neg_mean_squared_error'),return_train_score=False,cv=10)
 print(np.sqrt(np.abs(np.mean(cv['test_score']))))
 
 
 #Grabbing Feature Importance#
-#print('grabbing feature importance')
-#LGB.fit(train_x,y_train)
-#feature_df=pd.DataFrame({'Cols':train_x.columns,'Vals':LGB.feature_importances_})
-#feature_df=feature_df.sort_values(['Vals'],ascending=[0])
+print('grabbing feature importance')
+LGB.fit(train_x,y_train)
+feature_df=pd.DataFrame({'Cols':train_x.columns,'Vals':LGB.feature_importances_})
+feature_df=feature_df.sort_values(['Vals'],ascending=[0])
 
 
 
 #Use when Submitting Below#
 '''
 test_x=temp.tail(1459)
-test_x=scaler.transform(test_x)
+#test_x=scaler.transform(test_x)
 str.fit(train_x,y_train)
 preds=np.expm1(str.predict(test_x))
 id_array = list(range(1461,2920))
