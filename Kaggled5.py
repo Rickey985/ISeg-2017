@@ -217,7 +217,7 @@ temp=pd.get_dummies(temp)
 
 #Use for testing purposes#
 train_x=temp.head(1460)
-#Getting Rid of an outlier#
+#Getting Rid of an outlier, and rows which are quite different than the submission data#
 train_x['SalePrice']=all_y
 abc=[4,11,13,20,46,66,70,167,178,185,199, 224,261, 309,313,318, 349,412,423,440,454,477,478, 523,540, 581,588,595,654,
      688, 691, 774, 798, 875, 898,926,970,987,1027,1109, 1169,1182,1239, 1256,1298,1324,1353,1359,1405,1442,1447]
@@ -230,11 +230,11 @@ train_x=train_x.drop(['SalePrice'],axis=1)
 #Modelling
 print('starting overall model')
 y_train=np.log1p(all_y)
-rf=Ridge(alpha=2.5,tol=0.00001)
+rf=Ridge(alpha=7.5,tol=0.00001)
 lass=Lasso(alpha=0.0005,random_state=5,max_iter=9999)
 #999999999
 Elas=ElasticNet(alpha=0.0008,random_state=5,max_iter=99999)
-gb=GradientBoostingRegressor(n_estimators=3000, learning_rate=0.05,
+gb=GradientBoostingRegressor(n_estimators=800, learning_rate=0.05,
                                    max_depth=4, max_features='sqrt',
                                    min_samples_leaf=15, min_samples_split=10,
                                    loss='huber', random_state =5)
@@ -245,7 +245,7 @@ cv=cross_validate(str,train_x,y_train,scoring=('neg_mean_squared_error'),return_
 print(np.sqrt(np.abs(np.mean(cv['test_score']))))
 
 #Use when Submitting Below#
-
+'''
 test_x=temp.tail(1459)
 str.fit(train_x,y_train)
 preds=np.expm1(str.predict(test_x))
@@ -259,3 +259,4 @@ gb.fit(train_x,y_train)
 new_preds=np.expm1(gb.predict(test_x))
 
 dat_frame=pd.DataFrame({'Sub':preds,'GBM':new_preds})
+'''
