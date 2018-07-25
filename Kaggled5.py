@@ -239,7 +239,7 @@ gb=GradientBoostingRegressor(n_estimators=800, learning_rate=0.05,
                                    min_samples_leaf=15, min_samples_split=10,
                                    loss='huber', random_state =5)
 kn=KNeighborsRegressor(n_jobs=3,n_neighbors=5)
-str=StackingRegressor(regressors=[lass,gb,kn,Elas],verbose=1,meta_regressor=rf)
+str=StackingRegressor(regressors=[lass,kn,Elas,gb],verbose=1,meta_regressor=rf)
 print('Overall RMPSE')
 cv=cross_validate(str,train_x,y_train,scoring=('neg_mean_squared_error'),return_train_score=False,cv=10)
 print(np.sqrt(np.abs(np.mean(cv['test_score']))))
